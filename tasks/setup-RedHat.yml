@@ -1,0 +1,26 @@
+---
+# tasks file for ansible-role-kubernetes
+
+- name: Ensure Kubernetes repository exists.
+  ansible.builtin.yum_repository:
+    name: kubernetes
+    description: Kubernetes
+    enabled: true
+    gpgcheck: true
+    repo_gpgcheck: true
+    baseurl: "{{ kubernetes_yum_base_url }}"
+    gpgkey: "{{ kubernetes_yum_gpg_key }}"
+
+- name: Add Kubernetes GPG keys.
+  ansible.builtin.rpm_key:
+    key: "{{ item }}"
+    state: present
+  register: kubernetes_rpm_key
+  with_items: "{{ kubernetes_yum_gpg_key }}"
+
+- name: Make cache if Kubernetes GPG key changed.
+  ansible.builtin.yum_repository:
+    update_cache: true
+  when: kubernetes_rpm_key is changed
+  args:
+    warn: false
